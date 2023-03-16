@@ -3,11 +3,14 @@ package com.atguigu.springcloud.controller;
 import com.atguigu.springcloud.entities.CommonResult;
 import com.atguigu.springcloud.entities.Payment;
 import com.atguigu.springcloud.service.PaymentService;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author mucongcong
@@ -23,6 +26,9 @@ public class PaymentController {
 
     @Value("${server.port}")
     private String serverPort;
+
+    @Resource
+    private DiscoveryClient discoveryClient;
 
     @PostMapping("/payment/create")
     public CommonResult create(@RequestBody Payment payment) {
@@ -48,4 +54,24 @@ public class PaymentController {
         }
     }
 
+    /**
+     * 获取eureka服务发现信息
+     **/
+    @GetMapping("/payment/discovery")
+    public Object discovery(){
+        //获取服务列表的信息
+        List<String> services = discoveryClient.getServices();
+        for (String element : services) {
+            log.info("*******element：" + element);
+        }
+
+        //获取CLOUD-PAYMENT-SERVICE服务的所有具体实例
+        List<ServiceInstance> instances = discoveryClient.getInstances("CLOUD-PAYMENT-SERVICE");
+        for (ServiceInstance instance : instances) {
+            //getServiceId服务器id getHost主机名称 getPort端口号  getUri地址
+            log.info(instance.getServiceId() + "\t" + instance.getHost() + "\t" + instance.getPort() + "\t" + instance.getUri());
+        }
+
+        return this.discoveryClient;
+    }
 }
